@@ -28,8 +28,8 @@ void liquid_vm_render(block_body_t *body, VALUE context, VALUE output)
             render_length_limit = NUM2LONG(render_length_limit_num);
     }
 
-    const size_t *const_ptr = (const size_t *)body->constants.data;
-    const uint8_t *ip = body->instructions.data;
+    const size_t *const_ptr = (const size_t *)body->code.constants.data;
+    const uint8_t *ip = body->code.instructions.data;
     VALUE interrupts = rb_ivar_get(context, id_ivar_interrupts);
     Check_Type(interrupts, T_ARRAY);
 
