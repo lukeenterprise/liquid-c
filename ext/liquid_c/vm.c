@@ -69,6 +69,28 @@ static vm_t *vm_from_context(VALUE context)
     return DATA_PTR(vm_obj);
 }
 
+void liquid_vm_next_instruction(const uint8_t **ip_ptr, const size_t **const_ptr_ptr)
+{
+    const uint8_t *ip = *ip_ptr;
+
+    switch (*ip++) {
+        case OP_LEAVE:
+            break;
+
+        case OP_WRITE_NODE:
+            (*const_ptr_ptr)++;
+            break;
+
+        case OP_WRITE_RAW:
+            (*const_ptr_ptr) += 2;
+            break;
+
+        default:
+            rb_bug("invalid opcode: %u", ip[-1]);
+    }
+    *ip_ptr = ip;
+}
+
 void liquid_vm_render(block_body_t *body, VALUE context, VALUE output)
 {
     Check_Type(output, T_STRING);
