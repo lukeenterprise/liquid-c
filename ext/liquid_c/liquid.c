@@ -8,11 +8,19 @@
 #include "variable_lookup.h"
 #include "vm.h"
 
+ID id_evaluate;
+ID id_to_liquid;
+ID id_call;
+
 VALUE mLiquid, mLiquidC, cLiquidSyntaxError, cLiquidVariable, cLiquidTemplate, cLiquidBlockBody;
 rb_encoding *utf8_encoding;
 
 void Init_liquid_c(void)
 {
+    id_evaluate = rb_intern("evaluate");
+    id_to_liquid = rb_intern("to_liquid");
+    id_call = rb_intern("call");
+
     utf8_encoding = rb_utf8_encoding();
     mLiquid = rb_define_module("Liquid");
     rb_global_variable(&mLiquid);
