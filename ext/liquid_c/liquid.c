@@ -3,6 +3,7 @@
 #include "variable.h"
 #include "lexer.h"
 #include "parser.h"
+#include "expression.h"
 #include "block.h"
 #include "context.h"
 #include "variable_lookup.h"
@@ -10,15 +11,18 @@
 
 ID id_evaluate;
 ID id_to_liquid;
+ID id_to_s;
 ID id_call;
 
 VALUE mLiquid, mLiquidC, cLiquidSyntaxError, cLiquidVariable, cLiquidTemplate, cLiquidBlockBody;
+VALUE cLiquidArgumentError;
 rb_encoding *utf8_encoding;
 
 void Init_liquid_c(void)
 {
     id_evaluate = rb_intern("evaluate");
     id_to_liquid = rb_intern("to_liquid");
+    id_to_s = rb_intern("to_s");
     id_call = rb_intern("call");
 
     utf8_encoding = rb_utf8_encoding();
@@ -27,6 +31,9 @@ void Init_liquid_c(void)
 
     mLiquidC = rb_define_module_under(mLiquid, "C");
     rb_global_variable(&mLiquidC);
+
+    cLiquidArgumentError = rb_const_get(mLiquid, rb_intern("ArgumentError"));
+    rb_global_variable(&cLiquidArgumentError);
 
     cLiquidSyntaxError = rb_const_get(mLiquid, rb_intern("SyntaxError"));
     rb_global_variable(&cLiquidSyntaxError);
@@ -42,6 +49,7 @@ void Init_liquid_c(void)
 
     init_liquid_tokenizer();
     init_liquid_parser();
+    init_liquid_expression();
     init_liquid_variable();
     init_liquid_block();
     init_liquid_context();

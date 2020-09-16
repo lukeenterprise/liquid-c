@@ -46,4 +46,9 @@ inline void c_buffer_write_ruby_value(c_buffer_t *buffer, VALUE value) {
     c_buffer_write(buffer, &value, sizeof(VALUE));
 }
 
+inline void c_buffer_concat(c_buffer_t *dest, c_buffer_t *src)
+{
+    c_buffer_write(dest, src->data, c_buffer_size(src));
+}
+
 #endif
