@@ -146,11 +146,11 @@ Liquid::StrainerTemplate.class_eval do
     private
 
     def filter_methods_hash
-      hash = {}
-      filter_methods.each do |method_name|
-        hash[method_name.to_sym] = true
+      @filter_methods_hash ||= {}.tap do |hash|
+        filter_methods.each do |method_name|
+          hash[method_name.to_sym] = true
+        end
       end
-      hash
     end
   end
 end
