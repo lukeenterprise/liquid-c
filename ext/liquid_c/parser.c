@@ -209,17 +209,10 @@ VALUE try_parse_constant_expression(parser_t *p)
 static void parse_and_compile_number(parser_t *p, vm_assembler_t *code)
 {
     VALUE num = parse_number(p);
-    if (RB_FIXNUM_P(num)) {
-        int x = FIX2INT(num);
-        if (x >= INT8_MIN && x <= INT8_MAX) {
-            vm_assembler_add_push_int8(code, x);
-            return;
-        } else if (x >= INT16_MIN && x <= INT16_MAX) {
-            vm_assembler_add_push_int16(code, x);
-            return;
-        }
-    }
-    vm_assembler_add_push_const(code, num);
+    if (RB_FIXNUM_P(num))
+        vm_assembler_add_push_fixnum(code, num);
+    else
+        vm_assembler_add_push_const(code, num);
     return;
 }
 

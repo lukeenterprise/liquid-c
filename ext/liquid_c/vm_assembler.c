@@ -83,6 +83,18 @@ void vm_assembler_add_write_node(vm_assembler_t *code, VALUE node)
     vm_assembler_write_ruby_constant(code, node);
 }
 
+void vm_assembler_add_push_fixnum(vm_assembler_t *code, VALUE num)
+{
+    int x = FIX2INT(num);
+    if (x >= INT8_MIN && x <= INT8_MAX) {
+        vm_assembler_add_push_int8(code, x);
+    } else if (x >= INT16_MIN && x <= INT16_MAX) {
+        vm_assembler_add_push_int16(code, x);
+    } else {
+        vm_assembler_add_push_const(code, num);
+    }
+}
+
 void vm_assembler_add_push_literal(vm_assembler_t *code, VALUE literal)
 {
     switch (literal) {
@@ -96,7 +108,11 @@ void vm_assembler_add_push_literal(vm_assembler_t *code, VALUE literal)
         vm_assembler_add_push_false(code);
         break;
     default:
-        vm_assembler_add_push_const(code, literal);
+        if (RB_FIXNUM_P(literal)) {
+            vm_assembler_add_push_fixnum(code, literal);
+        } else {
+            vm_assembler_add_push_const(code, literal);
+        }
         break;
     }
 }

@@ -39,6 +39,7 @@ void vm_assembler_free(vm_assembler_t *code);
 void vm_assembler_gc_mark(vm_assembler_t *code);
 void vm_assembler_add_write_raw(vm_assembler_t *code, const char *string, size_t size);
 void vm_assembler_add_write_node(vm_assembler_t *code, VALUE node);
+void vm_assembler_add_push_fixnum(vm_assembler_t *code, VALUE num);
 void vm_assembler_add_push_literal(vm_assembler_t *code, VALUE literal);
 
 static inline size_t vm_assembler_alloc_memsize(const vm_assembler_t *code)
