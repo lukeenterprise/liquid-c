@@ -21,7 +21,7 @@ static VALUE try_variable_strict_parse(VALUE uncast_args)
     variable_parse_args_t *parse_args = (void *)uncast_args;
     parser_t p;
     init_parser(&p, parse_args->markup, parse_args->markup_end);
-    vm_assembler_t *code = parse_args->code;
+    vm_assembler_t *code = &parse_args->body->code;
 
     if (p.cur.type == TOKEN_EOS)
         return Qnil;
@@ -98,9 +98,6 @@ static VALUE try_variable_strict_parse(VALUE uncast_args)
                 rb_gc_force_recycle(push_keywords_obj); // also acts as a RB_GC_GUARD(push_keywords_obj);
             }
         }
-        if (arg_count > 254) {
-            rb_enc_raise(utf8_encoding, cLiquidSyntaxError, "Too many filter arguments");
-        }
         vm_assembler_add_filter(code, filter_name, arg_count);
     }
 
@@ -121,7 +118,9 @@ static VALUE variable_strict_parse_rescue(VALUE uncast_args, VALUE exception)
 {
     variable_strict_parse_rescue_t *rescue_args = (void *)uncast_args;
     variable_parse_args_t *parse_args = rescue_args->parse_args;
-    vm_assembler_t *code = parse_args->code;
+    vm_assembler_t *code = &parse_args->body->code;
+
+    // undo partial strict parse
     code->instructions.data_end = code->instructions.data + rescue_args->instructions_size;
     code->constants.data_end = code->constants.data + rescue_args->constants_size;
 
@@ -134,13 +133,22 @@ static VALUE variable_strict_parse_rescue(VALUE uncast_args, VALUE exception)
         exception, markup_obj, parse_args->parse_context
     );
 
-    vm_assembler_add_write_node(code, variable_obj);
+    // lax parse
+    code->protected_stack_size = code->stack_size;
+    vm_assembler_add_render_variable_rescue(code, parse_args->line_number);
+    rb_funcall(variable_obj, id_compile_evaluate, 1, parse_args->body->obj);
+    if (code->stack_size != code->protected_stack_size + 1) {
+        rb_raise(rb_eRuntimeError, "Liquid::Variable#compile_evaluate didn't leave exactly 1 new element on the stack");
+    }
+    vm_assembler_add_pop_write(code);
+    code->stack_size = code->protected_stack_size;
+
     return Qnil;
 }
 
 void internal_variable_parse(variable_parse_args_t *parse_args)
 {
-    vm_assembler_t *code = parse_args->code;
+    vm_assembler_t *code = &parse_args->body->code;
     variable_strict_parse_rescue_t rescue_args = {
         .parse_args = parse_args,
         .instructions_size = c_buffer_size(&code->instructions),
