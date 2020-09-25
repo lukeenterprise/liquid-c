@@ -47,6 +47,19 @@ class ExpressionTest < MiniTest::Test
     assert_equal 42, context.evaluate(expr)
   end
 
+  def test_find_missing_variable
+    context = Liquid::Context.new({})
+    expr = Liquid::C::Expression.strict_parse('missing')
+
+    assert_nil context.evaluate(expr)
+
+    context.strict_variables = true
+
+    assert_raises(Liquid::UndefinedVariable) do
+      context.evaluate(expr)
+    end
+  end
+
   def test_lookup_const_key
     context = Liquid::Context.new({"obj" => { "prop" => "some value" }})
 
@@ -68,6 +81,19 @@ class ExpressionTest < MiniTest::Test
     assert_equal 3, context.evaluate(Liquid::C::Expression.strict_parse('ary.size'))
     assert_equal 'a', context.evaluate(Liquid::C::Expression.strict_parse('ary.first'))
     assert_equal 'c', context.evaluate(Liquid::C::Expression.strict_parse('ary.last'))
+  end
+
+  def test_lookup_missing_key
+    context = Liquid::Context.new({ 'obj' => {} })
+    expr = Liquid::C::Expression.strict_parse('obj.missing')
+
+    assert_nil context.evaluate(expr)
+
+    context.strict_variables = true
+
+    assert_raises(Liquid::UndefinedVariable) do
+      context.evaluate(expr)
+    end
   end
 
   def test_const_range
