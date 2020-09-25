@@ -232,6 +232,38 @@ static VALUE vm_render_until_error(VALUE uncast_args)
         switch (*ip++) {
             case OP_LEAVE:
                 return false;
+
+            case OP_PUSH_CONST:
+                vm_stack_push(vm, (VALUE)*const_ptr++);
+                break;
+            case OP_HASH_NEW:
+            {
+                size_t hash_size = *ip++;
+                size_t num_keys_and_values = hash_size * 2;
+                VALUE hash = rb_hash_new();
+                VALUE *args_ptr = vm_stack_pop_n_use_in_place(vm, num_keys_and_values);
+                hash_bulk_insert(num_keys_and_values, args_ptr, hash);
+                vm_stack_push(vm, hash);
+                break;
+            }
+            case OP_FILTER:
+            {
+                VALUE filter_name = (VALUE)*const_ptr++;
+                uint8_t num_args = *ip++; // includes input argument
+                VALUE *args_ptr = vm_stack_pop_n_use_in_place(vm, num_args);
+                VALUE result = vm_invoke_filter(vm, filter_name, num_args, args_ptr);
+                vm_stack_push(vm, result);
+                break;
+            }
+            case OP_PUSH_EVAL_EXPR:
+            {
+                VALUE expression = (VALUE)*const_ptr++;
+                vm_stack_push(vm, context_evaluate(args->context, expression));
+                break;
+            }
+
+            // Rendering instructions
+
             case OP_WRITE_RAW:
             {
                 const char *text = (const char *)*const_ptr++;
@@ -260,34 +292,6 @@ static VALUE vm_render_until_error(VALUE uncast_args)
                 write_obj(output, var_result);
                 args->ip = NULL;
                 increment_write_score(args);
-                break;
-            }
-            case OP_PUSH_CONST:
-                vm_stack_push(vm, (VALUE)*const_ptr++);
-                break;
-            case OP_HASH_NEW:
-            {
-                size_t hash_size = *ip++;
-                size_t num_keys_and_values = hash_size * 2;
-                VALUE hash = rb_hash_new();
-                VALUE *args_ptr = vm_stack_pop_n_use_in_place(vm, num_keys_and_values);
-                hash_bulk_insert(num_keys_and_values, args_ptr, hash);
-                vm_stack_push(vm, hash);
-                break;
-            }
-            case OP_FILTER:
-            {
-                VALUE filter_name = (VALUE)*const_ptr++;
-                uint8_t num_args = *ip++; // includes input argument
-                VALUE *args_ptr = vm_stack_pop_n_use_in_place(vm, num_args);
-                VALUE result = vm_invoke_filter(vm, filter_name, num_args, args_ptr);
-                vm_stack_push(vm, result);
-                break;
-            }
-            case OP_PUSH_EVAL_EXPR:
-            {
-                VALUE expression = (VALUE)*const_ptr++;
-                vm_stack_push(vm, context_evaluate(args->context, expression));
                 break;
             }
 
