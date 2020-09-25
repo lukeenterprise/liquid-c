@@ -226,7 +226,7 @@ static VALUE vm_render_until_error(VALUE uncast_args)
     const uint8_t *ip = args->ip;
     vm_t *vm = args->vm;
     VALUE output = args->output;
-    args->ip = NULL;
+    args->ip = NULL; // used by vm_render_rescue, NULL to indicate that it isn't in a rescue block
 
     while (true) {
         switch (*ip++) {
@@ -280,7 +280,10 @@ static VALUE vm_render_until_error(VALUE uncast_args)
                 increment_write_score(args);
                 break;
             case OP_RENDER_VARIABLE_RESCUE:
+                // Save state used by vm_render_rescue to rescue from a variable rendering exception
                 args->node_line_number = (unsigned int)*const_ptr++;
+                // vm_render_rescue will iterate from this instruction to the instruction
+                // following OP_POP_WRITE_VARIABLE to resume rendering from
                 args->ip = ip;
                 args->const_ptr = const_ptr;
                 break;
@@ -290,7 +293,7 @@ static VALUE vm_render_until_error(VALUE uncast_args)
                 if (vm->global_filter != Qnil)
                     var_result = rb_funcall(vm->global_filter, id_call, 1, var_result);
                 write_obj(output, var_result);
-                args->ip = NULL;
+                args->ip = NULL; // mark the end of a rescue block, used by vm_render_rescue
                 increment_write_score(args);
                 break;
             }
