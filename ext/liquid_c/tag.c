@@ -3,7 +3,6 @@
 #include "block.h"
 
 static ID id_parse;
-static ID id_compile;
 
 static VALUE cLiquidTag;
 
@@ -35,7 +34,6 @@ static VALUE tag_compile(VALUE self, VALUE block_body_obj)
 void init_liquid_tag()
 {
     id_parse = rb_intern("parse");
-    id_compile = rb_intern("compile");
 
     cLiquidTag = rb_const_get(mLiquid, rb_intern("Tag"));
     rb_global_variable(&cLiquidTag);

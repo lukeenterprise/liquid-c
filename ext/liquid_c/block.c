@@ -9,7 +9,6 @@
 static ID
     intern_raise_missing_variable_terminator,
     intern_raise_missing_tag_terminator,
-    intern_compile,
     intern_square_brackets,
     intern_set_line_number,
     intern_unknown_tag_in_liquid_tag,
@@ -193,7 +192,7 @@ static tag_markup_t internal_block_body_parse(block_body_t *body, parse_context_
                     goto loop_break;
                 }
 
-                rb_funcall(tag_class, intern_compile, 5, tag_name, markup,
+                rb_funcall(tag_class, id_compile, 5, tag_name, markup,
                         parse_context->tokenizer_obj, parse_context->ruby_obj, parse_context->block_body_obj);
 
                 render_score_increment += 1;
@@ -409,7 +408,6 @@ void init_liquid_block()
 {
     intern_raise_missing_variable_terminator = rb_intern("raise_missing_variable_terminator");
     intern_raise_missing_tag_terminator = rb_intern("raise_missing_tag_terminator");
-    intern_compile = rb_intern("compile");
     intern_square_brackets = rb_intern("[]");
     intern_set_line_number = rb_intern("line_number=");
     intern_unknown_tag_in_liquid_tag = rb_intern("unknown_tag_in_liquid_tag");

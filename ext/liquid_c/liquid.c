@@ -16,6 +16,7 @@ ID id_evaluate;
 ID id_to_liquid;
 ID id_to_s;
 ID id_call;
+ID id_compile;
 ID id_compile_evaluate;
 ID id_blank_p;
 
@@ -37,6 +38,7 @@ void Init_liquid_c(void)
     id_to_liquid = rb_intern("to_liquid");
     id_to_s = rb_intern("to_s");
     id_call = rb_intern("call");
+    id_compile = rb_intern("compile");
     id_compile_evaluate = rb_intern("compile_evaluate");
     id_blank_p = rb_intern("blank?");
 
