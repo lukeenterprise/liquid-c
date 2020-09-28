@@ -380,6 +380,14 @@ static VALUE block_body_add_new_int_range(VALUE self)
     return self;
 }
 
+static VALUE block_body_add_pop_write(VALUE self)
+{
+    block_body_t *body;
+    BlockBody_Get_Struct(self, body);
+    vm_assembler_add_pop_write_from_ruby(&body->code);
+    return self;
+}
+
 static VALUE block_body_add_hash_new(VALUE self, VALUE hash_size)
 {
     block_body_t *body;
@@ -425,6 +433,7 @@ void init_liquid_block()
     rb_define_method(cLiquidCBlockBody, "add_lookup_key", block_body_add_lookup_key, 1);
     rb_define_method(cLiquidCBlockBody, "add_new_int_range", block_body_add_new_int_range, 0);
 
+    rb_define_method(cLiquidCBlockBody, "add_pop_write", block_body_add_pop_write, 0);
     rb_define_method(cLiquidCBlockBody, "add_hash_new", block_body_add_hash_new, 1);
     rb_define_method(cLiquidCBlockBody, "add_filter", block_body_add_filter, 2);
 

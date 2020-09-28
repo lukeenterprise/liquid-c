@@ -212,6 +212,14 @@ void vm_assembler_add_lookup_key_from_ruby(vm_assembler_t *code, VALUE code_obj,
     }
 }
 
+void vm_assembler_add_pop_write_from_ruby(vm_assembler_t *code)
+{
+    ensure_parsing(code);
+    vm_assembler_require_stack_args(code, 1);
+
+    vm_assembler_add_pop_write(code);
+}
+
 void vm_assembler_add_new_int_range_from_ruby(vm_assembler_t *code)
 {
     ensure_parsing(code);
