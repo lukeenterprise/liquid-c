@@ -297,7 +297,7 @@ static VALUE vm_render_until_error(VALUE uncast_args)
             {
                 VALUE key = vm_stack_pop(vm);
                 VALUE value = context_find_variable(args->context, key, Qtrue);
-                vm_stack_push(vm, context_evaluate(args->context, value));
+                vm_stack_push(vm, value);
                 break;
             }
             case OP_LOOKUP_CONST_KEY:

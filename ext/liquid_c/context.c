@@ -8,7 +8,7 @@ ID id_aset, id_set_context;
 static ID id_has_key, id_aref;
 static ID id_ivar_scopes, id_ivar_environments, id_ivar_static_environments, id_ivar_strict_variables;
 
-VALUE context_evaluate(VALUE self, VALUE expression)
+static VALUE context_evaluate(VALUE self, VALUE expression)
 {
     // Scalar type stored directly in the VALUE, this needs to be checked anyways to use RB_BUILTIN_TYPE
     if (RB_SPECIAL_CONST_P(expression))
