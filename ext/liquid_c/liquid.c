@@ -10,12 +10,14 @@
 #include "context.h"
 #include "variable_lookup.h"
 #include "vm.h"
+#include "tag.h"
 
 ID id_evaluate;
 ID id_to_liquid;
 ID id_to_s;
 ID id_call;
 ID id_compile_evaluate;
+ID id_blank_p;
 
 VALUE mLiquid, mLiquidC, cLiquidVariable, cLiquidTemplate, cLiquidBlockBody;
 VALUE cLiquidVariableLookup, cLiquidRangeLookup;
@@ -36,6 +38,7 @@ void Init_liquid_c(void)
     id_to_s = rb_intern("to_s");
     id_call = rb_intern("call");
     id_compile_evaluate = rb_intern("compile_evaluate");
+    id_blank_p = rb_intern("blank?");
 
     utf8_encoding = rb_utf8_encoding();
     utf8_encoding_index = rb_enc_to_index(utf8_encoding);
@@ -80,5 +83,6 @@ void Init_liquid_c(void)
     init_liquid_context();
     init_liquid_variable_lookup();
     init_liquid_vm();
+    init_liquid_tag();
 }
 

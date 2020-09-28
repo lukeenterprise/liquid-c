@@ -9,8 +9,7 @@
 static ID
     intern_raise_missing_variable_terminator,
     intern_raise_missing_tag_terminator,
-    intern_is_blank,
-    intern_parse,
+    intern_compile,
     intern_square_brackets,
     intern_set_line_number,
     intern_unknown_tag_in_liquid_tag,
@@ -26,6 +25,7 @@ typedef struct tag_markup {
 
 typedef struct parse_context {
     tokenizer_t *tokenizer;
+    VALUE block_body_obj;
     VALUE tokenizer_obj;
     VALUE ruby_obj;
 } parse_context_t;
@@ -56,8 +56,6 @@ const rb_data_type_t block_body_data_type = {
     { block_body_mark, block_body_free, block_body_memsize, },
     NULL, NULL, RUBY_TYPED_FREE_IMMEDIATELY
 };
-
-#define BlockBody_Get_Struct(obj, sval) TypedData_Get_Struct(obj, block_body_t, &block_body_data_type, sval)
 
 static VALUE block_body_allocate(VALUE klass)
 {
@@ -195,13 +193,9 @@ static tag_markup_t internal_block_body_parse(block_body_t *body, parse_context_
                     goto loop_break;
                 }
 
-                VALUE new_tag = rb_funcall(tag_class, intern_parse, 4,
-                        tag_name, markup, parse_context->tokenizer_obj, parse_context->ruby_obj);
+                rb_funcall(tag_class, intern_compile, 5, tag_name, markup,
+                        parse_context->tokenizer_obj, parse_context->ruby_obj, parse_context->block_body_obj);
 
-                if (body->blank && !RTEST(rb_funcall(new_tag, intern_is_blank, 0)))
-                    body->blank = false;
-
-                vm_assembler_add_write_node(&body->code, new_tag);
                 render_score_increment += 1;
                 break;
             }
@@ -222,6 +216,7 @@ static void ensure_not_parsing(block_body_t *body)
 static VALUE block_body_parse(VALUE self, VALUE tokenizer_obj, VALUE parse_context_obj)
 {
     parse_context_t parse_context = {
+        .block_body_obj = self,
         .tokenizer_obj = tokenizer_obj,
         .ruby_obj = parse_context_obj,
     };
@@ -406,8 +401,7 @@ void init_liquid_block()
 {
     intern_raise_missing_variable_terminator = rb_intern("raise_missing_variable_terminator");
     intern_raise_missing_tag_terminator = rb_intern("raise_missing_tag_terminator");
-    intern_is_blank = rb_intern("blank?");
-    intern_parse = rb_intern("parse");
+    intern_compile = rb_intern("compile");
     intern_square_brackets = rb_intern("[]");
     intern_set_line_number = rb_intern("line_number=");
     intern_unknown_tag_in_liquid_tag = rb_intern("unknown_tag_in_liquid_tag");
