@@ -47,9 +47,8 @@ static VALUE echo_class_compile(VALUE klass, VALUE tag_name, VALUE markup,
         .markup_end = RSTRING_PTR(markup) + RSTRING_LEN(markup),
         .body = body,
         .parse_context = parse_context_obj,
-        .line_number = tokenizer->line_number,
     };
-    internal_variable_parse(&parse_args);
+    internal_variable_compile(&parse_args, tokenizer->line_number);
     return Qnil;
 }
 
