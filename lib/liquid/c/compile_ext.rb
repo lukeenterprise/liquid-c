@@ -66,3 +66,11 @@ Liquid::Raw.class_eval do
     code.add_pop_write
   end
 end
+
+Liquid::Assign.class_eval do
+  unless defined?(raise_syntax_error) # refactor to move to the liquid gem
+    def self.raise_syntax_error(parse_context)
+      raise Liquid::SyntaxError, parse_context.locale.t('errors.syntax.assign')
+    end
+  end
+end

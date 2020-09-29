@@ -4,6 +4,7 @@
 void init_liquid_context();
 VALUE context_find_variable(VALUE self, VALUE key, VALUE raise_on_not_found);
 void context_maybe_raise_undefined_variable(VALUE self, VALUE key);
+void context_assign(VALUE context, VALUE name, VALUE value);
 
 extern ID id_aset, id_set_context;
 

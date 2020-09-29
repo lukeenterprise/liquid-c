@@ -131,6 +131,20 @@ VALUE context_filtering_p(VALUE self)
     return liquid_vm_filtering(self) ? Qtrue : Qfalse;
 }
 
+void context_assign(VALUE context, VALUE name, VALUE value)
+{
+    VALUE scopes = rb_ivar_get(context, id_ivar_scopes);
+    Check_Type(scopes, T_ARRAY);
+    long scopes_size = RARRAY_LEN(scopes);
+    if (RB_UNLIKELY(scopes_size == 0))
+        rb_raise(rb_eRuntimeError, "Liquid::Context#scopes is empty, missing the required outer scope");
+
+    VALUE last_scope = RARRAY_AREF(scopes, scopes_size - 1);
+    Check_Type(last_scope, T_HASH);
+
+    rb_hash_aset(last_scope, name, value);
+}
+
 void init_liquid_context()
 {
     id_has_key = rb_intern("key?");

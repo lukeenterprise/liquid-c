@@ -59,6 +59,7 @@ void vm_assembler_gc_mark(vm_assembler_t *code)
             case OP_FIND_STATIC_VAR:
             case OP_LOOKUP_CONST_KEY:
             case OP_LOOKUP_COMMAND:
+            case OP_ASSIGN:
                 rb_gc_mark(*const_ptr++);
                 break;
 
