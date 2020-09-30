@@ -19,7 +19,7 @@ static int compile_each_keyword_arg(VALUE key, VALUE value, VALUE func_arg)
 
     vm_assembler_add_push_const(code, key);
 
-    bool is_const_expr = rb_respond_to(value, id_evaluate) == Qtrue;
+    bool is_const_expr = !rb_respond_to(value, id_evaluate);
     compile_expression(code, value, is_const_expr);
 
     return ST_CONTINUE;
