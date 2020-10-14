@@ -48,8 +48,12 @@ void vm_assembler_gc_mark(vm_assembler_t *code)
                 break;
 
             case OP_WRITE_RAW:
-                const_ptr += 2;
+            case OP_WRITE_RAW_SKIP:
+            {
+                size_t size = bytes_to_uint24(ip);
+                ip += 3 + size;
                 break;
+            }
 
             case OP_WRITE_NODE:
             case OP_PUSH_CONST:
@@ -72,9 +76,12 @@ void vm_assembler_gc_mark(vm_assembler_t *code)
 
 void vm_assembler_add_write_raw(vm_assembler_t *code, const char *string, size_t size)
 {
-    vm_assembler_write_opcode(code, OP_WRITE_RAW);
-    size_t slice[2] = { (size_t)string, size };
-    c_buffer_write(&code->constants, &slice, sizeof(slice));
+    uint8_t instructions[4];
+    instructions[0] = OP_WRITE_RAW;
+    uint24_to_bytes((unsigned int)size, &instructions[1]);
+
+    c_buffer_write(&code->instructions, &instructions, sizeof(instructions));
+    c_buffer_write(&code->instructions, (char *)string, size);
 }
 
 void vm_assembler_add_write_node(vm_assembler_t *code, VALUE node)

@@ -4,11 +4,13 @@
 #include <assert.h>
 #include "liquid.h"
 #include "c_buffer.h"
+#include "intutil.h"
 
 enum opcode {
     OP_LEAVE = 0,
     OP_WRITE_RAW = 1,
     OP_WRITE_NODE = 2,
+    OP_WRITE_RAW_SKIP,
     OP_POP_WRITE_VARIABLE,
     OP_PUSH_CONST,
     OP_PUSH_NIL,
@@ -192,7 +194,10 @@ static inline void vm_assembler_add_filter(vm_assembler_t *code, VALUE filter_na
 
 static inline void vm_assembler_add_render_variable_rescue(vm_assembler_t *code, size_t node_line_number)
 {
-    uint8_t instructions[4] = { OP_RENDER_VARIABLE_RESCUE, node_line_number >> 16, node_line_number >> 8, node_line_number };
+    uint8_t instructions[4];
+    instructions[0] = OP_RENDER_VARIABLE_RESCUE;
+    uint24_to_bytes((unsigned int)node_line_number, &instructions[1]);
+
     c_buffer_write(&code->instructions, &instructions, sizeof(instructions));
 }
 
