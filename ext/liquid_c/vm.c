@@ -3,8 +3,6 @@
 
 #include "liquid.h"
 #include "vm.h"
-#include "resource_limits.h"
-#include "context.h"
 #include "variable_lookup.h"
 
 ID id_render_node;
@@ -18,18 +16,6 @@ ID id_global_filter;
 
 static VALUE cLiquidCVM;
 
-typedef struct vm {
-    c_buffer_t stack;
-    VALUE strainer;
-    VALUE filter_methods;
-    VALUE interrupts;
-    VALUE resource_limits_obj;
-    resource_limits_t *resource_limits;
-    VALUE global_filter;
-    bool strict_filters;
-    bool invoking_filter;
-} vm_t;
-
 static void vm_mark(void *ptr)
 {
     vm_t *vm = ptr;
@@ -40,6 +26,7 @@ static void vm_mark(void *ptr)
     rb_gc_mark(vm->interrupts);
     rb_gc_mark(vm->resource_limits_obj);
     rb_gc_mark(vm->global_filter);
+    context_mark(&vm->context);
 }
 
 static void vm_free(void *ptr)
@@ -82,10 +69,13 @@ static VALUE vm_internal_new(VALUE context)
     vm->strict_filters = RTEST(rb_funcall(context, id_strict_filters, 0));
     vm->global_filter = rb_funcall(context, id_global_filter, 0);
     vm->invoking_filter = false;
+
+    context_internal_init(context, &vm->context);
+
     return obj;
 }
 
-static vm_t *vm_from_context(VALUE context)
+vm_t *vm_from_context(VALUE context)
 {
     VALUE vm_obj = rb_attr_get(context, id_vm);
     if (vm_obj == Qnil) {
@@ -218,7 +208,6 @@ typedef struct vm_render_until_error_args {
     vm_t *vm;
     const uint8_t *ip; // use for initial address and to save an address for rescuing
     const size_t *const_ptr;
-    VALUE context;
 
     /* rendering fields */
     VALUE output;
@@ -307,7 +296,7 @@ static VALUE vm_render_until_error(VALUE uncast_args)
             case OP_FIND_VAR:
             {
                 VALUE key = vm_stack_pop(vm);
-                VALUE value = context_find_variable(args->context, key, Qtrue);
+                VALUE value = context_find_variable(&vm->context, key, Qtrue);
                 vm_stack_push(vm, value);
                 break;
             }
@@ -320,7 +309,7 @@ static VALUE vm_render_until_error(VALUE uncast_args)
                 bool is_command = ip[-1] == OP_LOOKUP_COMMAND;
                 VALUE key = vm_stack_pop(vm);
                 VALUE object = vm_stack_pop(vm);
-                VALUE result = variable_lookup_key(args->context, object, key, is_command);
+                VALUE result = variable_lookup_key(vm->context.self, object, key, is_command);
                 vm_stack_push(vm, result);
                 break;
             }
@@ -364,7 +353,7 @@ static VALUE vm_render_until_error(VALUE uncast_args)
                 break;
             }
             case OP_WRITE_NODE:
-                rb_funcall(cLiquidBlockBody, id_render_node, 3, args->context, output, (VALUE)*const_ptr++);
+                rb_funcall(cLiquidBlockBody, id_render_node, 3, vm->context.self, output, (VALUE)*const_ptr++);
                 if (RARRAY_LEN(vm->interrupts)) {
                     return false;
                 }
@@ -409,8 +398,7 @@ VALUE liquid_vm_evaluate(VALUE context, vm_assembler_t *code)
     vm_render_until_error_args_t args = {
         .vm = vm,
         .const_ptr = (const size_t *)code->constants.data,
-        .ip = code->instructions.data,
-        .context = context,
+        .ip = code->instructions.data
     };
     vm_render_until_error((VALUE)&args);
     VALUE ret = vm_stack_pop(vm);
@@ -518,7 +506,7 @@ static VALUE vm_render_rescue(VALUE uncast_args, VALUE exception)
     }
 
     rb_funcall(cLiquidBlockBody, rb_intern("c_rescue_render_node"), 5,
-        render_args->context, render_args->output, line_number, exception, blank_tag);
+        vm->context.self, render_args->output, line_number, exception, blank_tag);
     return true;
 }
 
@@ -533,7 +521,6 @@ void liquid_vm_render(block_body_t *body, VALUE context, VALUE output)
         .vm = vm,
         .const_ptr = (const size_t *)body->code.constants.data,
         .ip = body->code.instructions.data,
-        .context = context,
         .output = output,
     };
     vm_render_rescue_args_t rescue_args = {
