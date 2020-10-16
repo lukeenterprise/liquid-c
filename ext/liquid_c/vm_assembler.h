@@ -8,7 +8,7 @@
 
 enum opcode {
     OP_LEAVE = 0,
-    OP_WRITE_RAW = 1,
+    OP_WRITE_RAW_W = 1,
     OP_WRITE_NODE = 2,
     OP_POP_WRITE_VARIABLE,
     OP_PUSH_CONST,
@@ -26,6 +26,8 @@ enum opcode {
     OP_HASH_NEW, // rb_hash_new & rb_hash_bulk_insert
     OP_FILTER,
     OP_RENDER_VARIABLE_RESCUE, // setup state to rescue variable rendering
+    OP_WRITE_RAW,
+    OP_JUMP_FWD_W,
     OP_JUMP_FWD,
 };
 

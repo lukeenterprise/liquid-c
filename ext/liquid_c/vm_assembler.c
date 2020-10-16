@@ -22,11 +22,18 @@ void vm_assembler_gc_mark(vm_assembler_t *code)
 
 void vm_assembler_add_write_raw(vm_assembler_t *code, const char *string, size_t size)
 {
-    uint8_t instructions[4];
-    instructions[0] = OP_WRITE_RAW;
-    uint24_to_bytes((unsigned int)size, &instructions[1]);
+    if (size > UINT8_MAX) {
+        uint8_t instructions[4];
+        instructions[0] = OP_WRITE_RAW_W;
+        uint24_to_bytes((unsigned int)size, &instructions[1]);
 
-    c_buffer_write(&code->instructions, &instructions, sizeof(instructions));
+        c_buffer_write(&code->instructions, &instructions, sizeof(instructions));
+    } else {
+        uint8_t instructions[2] = { OP_WRITE_RAW, size };
+
+        c_buffer_write(&code->instructions, &instructions, sizeof(instructions));
+    }
+
     c_buffer_write(&code->instructions, (char *)string, size);
 }
 
